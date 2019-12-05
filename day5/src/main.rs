@@ -20,54 +20,98 @@ fn main() {
         let (mode1, mode2, mode3, op) = parse_operation(xs[pc]);
         match execute_operation(mode1, mode2, mode3, op, xs, pc) {
             (None, new_xs) => {
-                // xs = new_xs;
                 break;
-            },
-            (Some(inc), new_xs) => {
+            }
+            (Some(new_pc), new_xs) => {
                 xs = new_xs;
-                pc += inc;
+                pc = new_pc;
             }
         }
+        println!("{}", pc);
     }
 }
 
 fn execute_operation(mode1: u32, mode2: u32, mode3: u32, op: i32, mut memory: Vec<i32>, pc: usize) -> (Option<usize>, Vec<i32>) {
+    let param1 = if op != 99 { get_param(mode1, memory.clone(), pc, 1) } else { 0 };
     return match op {
         99 => (None, memory),
         1 => {
-            let param1 = if mode1 == 1 { memory[pc + 1] } else { memory[memory[pc + 1] as usize] };
-            let param2 = if mode2 == 1 { memory[pc + 2] } else { memory[memory[pc + 2] as usize] };
+            // Add
+            let param2 = get_param(mode2, memory.clone(), pc, 2);
             let target = memory[pc + 3];
             memory[target as usize] = param1 + param2;
-            return (Some(4), memory);
+            return (Some(pc + 4), memory);
         },
         2 => {
-            let param1 = if mode1 == 1 { memory[pc + 1] } else { memory[memory[pc + 1] as usize] };
-            let param2 = if mode2 == 1 { memory[pc + 2] } else { memory[memory[pc + 2] as usize] };
+            // Multiply
+            let param2 = get_param(mode2, memory.clone(), pc, 2);
             let target = memory[pc + 3];
             memory[target as usize] = param1 * param2;
-            return (Some(4), memory);
+            return (Some(pc + 4), memory);
         },
         3 => {
-            // Input?
-            let input = 1;
+            // Input
+            let input = 5;
             let target = memory[pc + 1];
             memory[target as usize] = input;
-            return (Some(2), memory);
+            return (Some(pc + 2), memory);
         },
         4 => {
-            // Output?
-            let param1 = if mode1 == 1 { memory[pc + 1] } else { memory[memory[pc + 1] as usize] };
+            // Output
             println!("Output: {}, PC: {}", param1, pc);
             if param1 != 0 {
                 println!("{:?}", memory);
             }
-            return (Some(2), memory);
+            return (Some(pc + 2), memory);
+        },
+        5 => {
+            // Jump if true
+            let param2 = get_param(mode2, memory.clone(), pc, 2);
+            if param1 != 0 {
+                return (Some(param2 as usize), memory)
+            } else {
+                return (Some(pc + 3), memory)
+            }
+        },
+        6 => {
+            // Jump if false
+            let param2 = get_param(mode2, memory.clone(), pc, 2);
+            if param1 == 0 {
+                return (Some(param2 as usize), memory)
+            } else {
+                return (Some(pc + 3), memory)
+            }
+        },
+        7 => {
+            // Less than
+            let param2 = get_param(mode2, memory.clone(), pc, 2);
+            let target = memory[pc + 3] as usize;
+            if param1 < param2 {
+                memory[target] = 1;
+            } else {
+                memory[target] = 0;
+            }
+            return (Some(pc + 4), memory);
+        },
+        8 => {
+            // Equals
+            let param2 = get_param(mode2, memory.clone(), pc, 2);
+            let target = memory[pc + 3] as usize;
+            if param1 == param2 {
+                memory[target] = 1;
+            } else {
+                memory[target] = 0;
+            }
+            return (Some(pc + 4), memory);
         },
         _ => {
             panic!("Unknown op {}", op);
         }
     }
+}
+
+fn get_param(mode: u32, memory: Vec<i32>, pc: usize, offset: usize) -> i32 {
+    return if mode == 1 { memory[pc + offset] } else { memory[memory[pc + offset] as usize] };
 }
 
 // return (mode1, mode2, mode3, op)
