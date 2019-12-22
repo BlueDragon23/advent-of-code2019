@@ -1,0 +1,8 @@
+[package]
+name = "day6"
+version = "0.1.0"
+authors = ["Aidan Goldthorpe"]
+
+[dependencies]
+itertools = "0.7.6"
+trees = "*"
