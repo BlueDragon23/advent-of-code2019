@@ -1,6 +1,7 @@
 use std::io::BufRead;
 use std::fs::File;
 use std::io::BufReader;
+use std::str;
 
 const WIDTH: usize = 25;
 const HEIGHT: usize = 6;
@@ -10,12 +11,21 @@ fn main() {
     let reader = BufReader::new(f);
     let data = reader.lines().next().unwrap().unwrap();
     let layers: Vec<&[u8]> = get_layers(&data);
-    let layer_with_fewest_0 = layers
-        .iter()
-        .min_by_key(|layer| get_char_count(layer, '0'))
-        .unwrap();
-    let result = get_char_count(layer_with_fewest_0, '1') * get_char_count(layer_with_fewest_0, '2');
-    println!("{}", result);
+    let image = layers.iter().fold(vec!['2' as u8; WIDTH * HEIGHT], |acc, layer| {
+        acc.iter().zip(layer.iter()).map(|(a, b)| {
+            if *a == '2' as u8 {
+                *b
+            } else {
+                *a
+            }
+        }).collect()
+    });
+    for i in 0..HEIGHT {
+        for j in 0..WIDTH {
+            print!("{}", if image[i * WIDTH + j] == '1' as u8 { '#' } else { '.' });
+        }
+        println!("");
+    }
 }
 
 fn get_layers<'a>(data: &'a String) -> Vec<&'a [u8]> {
